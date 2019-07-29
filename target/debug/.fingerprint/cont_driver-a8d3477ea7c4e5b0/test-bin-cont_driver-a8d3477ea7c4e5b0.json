@@ -1,0 +1,1 @@
+{"rustc":11662075050264400882,"features":"[]","target":17817285355168558228,"profile":1647870076477133176,"path":1036222786711178230,"deps":[["libusb v0.3.0","libusb",8263185423847064137]],"local":[{"MtimeBased":[[1564428223,48725124],".fingerprint/cont_driver-a8d3477ea7c4e5b0/dep-test-bin-cont_driver-a8d3477ea7c4e5b0"]}],"rustflags":[],"metadata":8220598151638388275}

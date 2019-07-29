@@ -1,0 +1,1 @@
+{"rustc":11662075050264400882,"features":"[\"default\", \"linux-static-libusb\"]","target":10088282520713642473,"profile":9935990280773120926,"path":10543269586785446636,"deps":[["cc v1.0.37","cc",12040393711931006647],["pkg-config v0.3.14","pkg_config",13323476149885499212]],"local":[{"Precalculated":"0.5.2"}],"rustflags":[],"metadata":5884950770081987167}

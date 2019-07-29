@@ -1,0 +1,1 @@
+{"rustc":11662075050264400882,"features":"[]","target":17817285355168558228,"profile":14996655781355331481,"path":1036222786711178230,"deps":[["hidapi v0.5.2","hidapi",17544703717877865574]],"local":[{"MtimeBased":[[1563127549,539453527],".fingerprint/cont_driver-fbe214d6a13da55c/dep-bin-cont_driver-fbe214d6a13da55c"]}],"rustflags":[],"metadata":8220598151638388275}

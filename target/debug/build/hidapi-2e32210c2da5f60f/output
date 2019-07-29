@@ -1,0 +1,30 @@
+cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu
+cargo:rustc-link-lib=usb-1.0
+TARGET = Some("x86_64-unknown-linux-gnu")
+OPT_LEVEL = Some("0")
+HOST = Some("x86_64-unknown-linux-gnu")
+CC_x86_64-unknown-linux-gnu = None
+CC_x86_64_unknown_linux_gnu = None
+HOST_CC = None
+CC = None
+CFLAGS_x86_64-unknown-linux-gnu = None
+CFLAGS_x86_64_unknown_linux_gnu = None
+HOST_CFLAGS = None
+CFLAGS = None
+CRATE_CC_NO_DEFAULTS = None
+DEBUG = Some("true")
+CARGO_CFG_TARGET_FEATURE = Some("fxsr,sse,sse2")
+running: "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-fno-omit-frame-pointer" "-m64" "-I" "etc/hidapi/hidapi" "-I" "/usr/include/libusb-1.0" "-Wall" "-Wextra" "-o" "/home/weston/dev/rust/cont_driver/target/debug/build/hidapi-2e32210c2da5f60f/out/etc/hidapi/libusb/hid.o" "-c" "etc/hidapi/libusb/hid.c"
+cargo:warning=etc/hidapi/libusb/hid.c: In function ‘hid_error’:
+cargo:warning=etc/hidapi/libusb/hid.c:1299:68: warning: unused parameter ‘dev’ [-Wunused-parameter]
+cargo:warning= HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
+cargo:warning=                                                        ~~~~~~~~~~~~^~~
+exit code: 0
+AR_x86_64-unknown-linux-gnu = None
+AR_x86_64_unknown_linux_gnu = None
+HOST_AR = None
+AR = None
+running: "ar" "crs" "/home/weston/dev/rust/cont_driver/target/debug/build/hidapi-2e32210c2da5f60f/out/libhidapi.a" "/home/weston/dev/rust/cont_driver/target/debug/build/hidapi-2e32210c2da5f60f/out/etc/hidapi/libusb/hid.o"
+exit code: 0
+cargo:rustc-link-lib=static=hidapi
+cargo:rustc-link-search=native=/home/weston/dev/rust/cont_driver/target/debug/build/hidapi-2e32210c2da5f60f/out
