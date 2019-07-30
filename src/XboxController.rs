@@ -175,13 +175,33 @@ impl ControllerData {
                 return ControllerState::Confused,
         }
     }
-
+    // TODO: make a struct (called ControllerTracker?) to contain ControllerData with below functionality
+    pub fn get_output(&self, last_state: &ControllerState, new_state: &ControllerState) -> Option<std::string::String> {
+        if let ControllerState::Poised_Char(c) = last_state {
+            if let ControllerState::Neutral = new_state {
+                return Some(std::string::String::from(format!("{}",c)));
+            }
+        }
+        None
+    }
 }
 #[derive(Debug)]
 pub enum ControllerState {
     Confused,
     Neutral,
     Poised_Char(char),
+}
+impl ControllerState {
+    pub fn copy(&self) -> ControllerState {  //TODO: do this properly (need wifi)
+        match self {
+            ControllerState::Confused =>
+                return ControllerState::Confused,
+            ControllerState::Neutral =>
+                return ControllerState::Neutral,
+            ControllerState::Poised_Char(c) =>
+                return ControllerState::Poised_Char(*c),
+        }
+    }
 }
 
 
@@ -287,8 +307,8 @@ impl ControllerData {
         self.button_a =       0b00010000 & buf[3] != 0;
         //self.button_ = 0b00001000 & buf[3] != 0; //no data encoded by this bit
         self.button_start =   0b00000100 & buf[3] != 0;
-        self.button_l_bumper = 0b00000010 & buf[3] != 0;
-        self.button_r_bumper = 0b00000001 & buf[3] != 0;
+        self.button_r_bumper = 0b00000010 & buf[3] != 0;
+        self.button_l_bumper = 0b00000001 & buf[3] != 0;
         // bytes 4 and 5
         self.trigger_l.pos = buf[4];
         self.trigger_r.pos = buf[5];

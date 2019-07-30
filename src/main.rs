@@ -21,15 +21,18 @@ fn main() {
     let mut handle = temp.unwrap();
     let mut controller_data = XboxController::init_controller_data();
     let mut buffer: [u8; 20] = [0; 20];
+    //let mut old_state = XboxController::ControllerState::Neutral;
+    let mut current_state = XboxController::ControllerState::Neutral;
     loop {
         match handle.read_interrupt(INPUT_CHANNEL, &mut buffer, TIMEOUT) {
             Ok(n) => {
-                let last_A = controller_data.is_A_pressed();
+                let old_state = current_state;
                 controller_data.load_from_bytes(&buffer);
-                let new_A = controller_data.is_A_pressed();
-                if  new_A!= last_A {
-                    println!("A button pressed? {}", new_A);
-                    println!("{:?}", controller_data.state()); 
+                current_state = controller_data.state();
+                match controller_data.get_output(&old_state, &current_state) {
+                    Some(s) =>
+                        println!("{}",s),
+                    None => {},
                 }
             }
             Err(LIBUSB_ERROR_TIMEOUT) => {
