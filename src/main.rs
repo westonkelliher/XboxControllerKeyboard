@@ -29,7 +29,7 @@ fn main() {
                 let new_A = controller_data.is_A_pressed();
                 if  new_A!= last_A {
                     println!("A button pressed? {}", new_A);
-                    println!("{:?}", controller_data.trigger_L_state()); 
+                    println!("{:?}", controller_data.state()); 
                 }
             }
             Err(LIBUSB_ERROR_TIMEOUT) => {
