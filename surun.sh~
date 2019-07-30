@@ -1,2 +1,0 @@
-cargo build
-sudo ./target/build/cont_driver
