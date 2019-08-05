@@ -1,10 +1,13 @@
 extern crate libusb;
+extern crate enigo;
 mod XboxController;
+use enigo::{Enigo, KeyboardControllable, Key};
 
 const INPUT_CHANNEL: u8 = 0x81;
 const TIMEOUT: std::time::Duration = std::time::Duration::from_millis(30);
 
 fn main() {
+    let mut enigo = Enigo::new();
     let context = libusb::Context::new().unwrap();
 
     let mut temp: Option<libusb::DeviceHandle> = None;
@@ -31,7 +34,8 @@ fn main() {
                 current_state = controller_data.state();
                 match controller_data.get_output(&old_state, &current_state) {
                     Some(s) =>
-                        println!("{}",s),
+                        enigo.key_sequence_parse(&s),     // simulate keyboard output
+                    //println!("{}",s),
                     None => {},
                 }
             }

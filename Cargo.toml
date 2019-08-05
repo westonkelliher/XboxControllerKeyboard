@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 libusb = "0.3.0"
+enigo = "0.0.13"

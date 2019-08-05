@@ -7,12 +7,13 @@ const DATAFLOW_INTERFACE: u8 = 0;
 
 fn abs(x: i16) -> i16 {
     if x < 0 {
-        -1*(x+1) // add 1 as cheapdirty way to avoid overflow
+        -1*(x+1) // add 1 as dirty way to avoid overflow
     } else {
         x
     }
 }
 
+//TODO: propper errors instead of String as Error
 pub fn get_controller_handle(context: &libusb::Context) -> Result<libusb::DeviceHandle, std::string::String> {
     let xbox_device_optn = get_device_at_address(XBOX_CONTROLLER_ID, &context);
     match xbox_device_optn {
