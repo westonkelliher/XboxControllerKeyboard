@@ -1,5 +1,5 @@
 [package]
-name = "cont_driver"
+name = "XKey"
 version = "0.1.0"
 authors = ["westonkelliher <westonkelliher@ucla.edu>"]
 edition = "2018"

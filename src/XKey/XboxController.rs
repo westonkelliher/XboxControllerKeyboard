@@ -98,6 +98,8 @@ pub struct ControllerData {
     trigger_r: TriggerData,
     joystick_l: JoyStickData,
     joystick_r: JoyStickData,
+    //
+    changed: bool,
 }
 impl ControllerData {
     pub fn state(&self) -> ControllerState {   //TODO: change all pub's in this file that need not be pub
@@ -111,74 +113,97 @@ impl ControllerData {
 
             // vowels
             (JoyStickState::Neutral, true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('a'),
+                return ControllerState::PoisedChar('a'),
             (JoyStickState::Neutral, false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('e'),
+                return ControllerState::PoisedChar('e'),
             (JoyStickState::Neutral, false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('i'),
+                return ControllerState::PoisedChar('i'),
             (JoyStickState::Neutral, false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('o'),
+                return ControllerState::PoisedChar('o'),
             (JoyStickState::Neutral, false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('u'),
+                return ControllerState::PoisedChar('u'),
             (JoyStickState::Neutral, false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::Poised_Char('y'),
+                return ControllerState::PoisedChar('y'),
 
             // non-voiced
             (JoyStickState::Up(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('p'),
+                return ControllerState::PoisedChar('p'),
             (JoyStickState::Up(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('t'),
+                return ControllerState::PoisedChar('t'),
             (JoyStickState::Up(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('f'),
+                return ControllerState::PoisedChar('f'),
             (JoyStickState::Up(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('s'),
+                return ControllerState::PoisedChar('s'),
             (JoyStickState::Up(_), false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('c'),
+                return ControllerState::PoisedChar('c'),
             (JoyStickState::Up(_), false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::Poised_Char('k'),
+                return ControllerState::PoisedChar('k'),
 
             // voiced
             (JoyStickState::Down(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('b'),
+                return ControllerState::PoisedChar('b'),
             (JoyStickState::Down(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('d'),
+                return ControllerState::PoisedChar('d'),
             (JoyStickState::Down(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('v'),
+                return ControllerState::PoisedChar('v'),
             (JoyStickState::Down(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('z'),
+                return ControllerState::PoisedChar('z'),
             (JoyStickState::Down(_), false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('g'),
+                return ControllerState::PoisedChar('g'),
             (JoyStickState::Down(_), false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::Poised_Char('j'),
+                return ControllerState::PoisedChar('j'),
 
             // slides
             (JoyStickState::Right(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('h'),
+                return ControllerState::PoisedChar('h'),
             (JoyStickState::Right(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('l'),
+                return ControllerState::PoisedChar('l'),
             (JoyStickState::Right(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('r'),
+                return ControllerState::PoisedChar('r'),
             (JoyStickState::Right(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('w'),
+                return ControllerState::PoisedChar('w'),
 
             // oddies
             (JoyStickState::Left(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('m'),
+                return ControllerState::PoisedChar('m'),
             (JoyStickState::Left(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('n'),
+                return ControllerState::PoisedChar('n'),
             (JoyStickState::Left(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('q'),
+                return ControllerState::PoisedChar('q'),
             (JoyStickState::Left(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::Poised_Char('x'),
+                return ControllerState::PoisedChar('x'),
 
             // convoluted
             (_, _, _, _, _, _, _) =>
                 return ControllerState::Confused,
         }
     }
+    pub fn is_shift(&self) -> bool {
+        if let TriggerState::Pressed(_) = self.trigger_l.state() {
+            return true;
+        }
+        false
+    }
+    
+    pub fn is_ctrl(&self) -> bool {
+        self.button_l_bumper
+    }
+    
+    pub fn is_alt(&self) -> bool {
+        self.button_l_stick
+    }
+
+    pub fn changed(&mut self) -> bool {
+        if self.changed {
+            self.changed = false;
+            return true;
+        }
+        false
+    }
+    
     // TODO: make a struct (called ControllerTracker?) to contain ControllerData with below functionality
     pub fn get_output(&self, last_state: &ControllerState, new_state: &ControllerState) -> Option<std::string::String> {
-        if let ControllerState::Poised_Char(c) = last_state {
+        if let ControllerState::PoisedChar(c) = last_state {
             if let ControllerState::Neutral = new_state {
                 return Some(std::string::String::from(format!("{}",c)));
             }
@@ -190,7 +215,7 @@ impl ControllerData {
 pub enum ControllerState {
     Confused,
     Neutral,
-    Poised_Char(char),
+    PoisedChar(char),
 }
 impl ControllerState {
     pub fn copy(&self) -> ControllerState {  //TODO: do this properly (need wifi)
@@ -199,8 +224,8 @@ impl ControllerState {
                 return ControllerState::Confused,
             ControllerState::Neutral =>
                 return ControllerState::Neutral,
-            ControllerState::Poised_Char(c) =>
-                return ControllerState::Poised_Char(*c),
+            ControllerState::PoisedChar(c) =>
+                return ControllerState::PoisedChar(*c),
         }
     }
 }
@@ -287,6 +312,8 @@ pub fn init_controller_data() -> ControllerData {
         trigger_r: TriggerData{pos: 0},
         joystick_l: JoyStickData {x_pos: 0, y_pos: 0},
         joystick_r: JoyStickData {x_pos: 0, y_pos: 0},
+        //
+        changed: true,
     }
 }
 
@@ -319,27 +346,9 @@ impl ControllerData {
         // bytes 10, 11, 12, 13
         self.joystick_r.x_pos = (buf[10] as i16) + ((buf[11] as i16) << 8);
         self.joystick_r.y_pos = (buf[12] as i16) + ((buf[13] as i16) << 8);
-        
-    }
-    
 
-    pub fn button_back_pressed(&self) -> bool {
-        self.button_back
+        // reduce cost of figuring out output
+        self.changed = true;
     }
 
-    pub fn joystick_L_pos(&self) -> (i16, i16) {
-        (self.joystick_l.x_pos, self.joystick_l.y_pos)
-    }
-
-    pub fn joystick_L_state(&self) -> JoyStickState {
-        self.joystick_l.state()
-    }
-
-    pub fn trigger_L_state(&self) -> TriggerState {
-        self.trigger_l.state()
-    }
-    
-    pub fn is_A_pressed(&self) -> bool {
-        self.button_a
-    }
 }
