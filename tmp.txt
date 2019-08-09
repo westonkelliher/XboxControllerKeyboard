@@ -1,0 +1,1 @@
+build a layer over enigo with standardized way to describe output. Im thinking "C-x n H e l l o \s W o r l d ! \n" \s being space

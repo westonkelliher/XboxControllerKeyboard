@@ -31,15 +31,14 @@ impl XKey {
     fn get_output_string(&self, last_state: &ControllerState) -> std::string::String {
         if let ControllerState::PoisedChar(c) = last_state {
             if let ControllerState::Neutral = self.controller_state {
-                let shift = if self.controller_data.is_shift() { "{+SHIFT}" } else { "" };
+                /*let shift = if self.controller_data.is_shift() { "{+SHIFT}" } else { "" };
                 let ctrl = if self.controller_data.is_ctrl() { "{+CTRL}" } else { "" };
                 let alt = if self.controller_data.is_alt() { "{+ALT}" } else { "" };
                 let shift_ = if self.controller_data.is_shift() { "{-SHIFT}" } else { "" };
                 let ctrl_ = if self.controller_data.is_ctrl() { "{-CTRL}" } else { "" };
                 let alt_ = if self.controller_data.is_alt() { "{-ALT}" } else { "" };
-                
-                return format!("{}{}{}{}{}{}{}",
-                shift, ctrl, alt, c, alt_, ctrl_, shift_);
+                */
+                return format!("{}", c);
             }
         }
         std::string::String::from("")
@@ -65,7 +64,13 @@ impl XKey {
                     self.controller_data.load_from_bytes(&self.usb_buffer);
                     self.controller_state = self.controller_data.state();
                     if self.controller_data.changed() {
+                        if self.controller_data.is_shift() { self.enigo.key_down(Key::Shift); }
+                        if self.controller_data.is_ctrl() { self.enigo.key_down(Key::Control); }
+                        if self.controller_data.is_alt() { self.enigo.key_down(Key::Alt); }
                         self.enigo.key_sequence_parse(&self.get_output_string(&last_state));
+                        self.enigo.key_up(Key::Shift);
+                        self.enigo.key_up(Key::Control);
+                        self.enigo.key_up(Key::Alt);
                     }
                 }
                 Err(LIBUSB_ERROR_TIMEOUT) => {

@@ -1,3 +1,4 @@
+
 extern crate libusb;
 
 const INPUT_BUFFER_SIZE:usize = 20;
@@ -102,14 +103,65 @@ pub struct ControllerData {
     changed: bool,
 }
 impl ControllerData {
+
+    //TODO: DPad enum. RButton enum (along with dpad() and rbutton() functions)
+    
     pub fn state(&self) -> ControllerState {   //TODO: change all pub's in this file that need not be pub
+        match (self.button_dpad_down, self.button_dpad_left,
+               self.button_dpad_up, self.button_dpad_right,
+               self.button_a, self.button_x, self.button_y, self.button_b,
+               self.button_r_bumper, self.trigger_r.state()) {
+            (true, false, false, false,
+             true, false, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('1'),
+            (true, false, false, false,
+             false, true, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('2'),
+            (true, false, false, false,
+             false, false, true, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('3'),
+            (true, false, false, false,
+             false, false, false, true, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('4'),
+            (true, false, false, false,
+             false, false, false, false, true, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('5'),
+            (true, false, false, false,
+             false, false, false, false, false, TriggerState::Pressed(_)) =>
+                return ControllerState::PoisedChar('6'),
+            (false, false, true, false,
+             true, false, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('7'),
+            (false, false, true, false,
+             false, true, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('8'),
+            (false, false, true, false,
+             false, false, true, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('9'),
+            (false, false, true, false,
+             false, false, false, true, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('0'),
+            (false, false, true, false,
+             false, false, false, false, true, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('-'),
+            (false, false, true, false,
+             false, false, false, false, false, TriggerState::Pressed(_)) =>
+                return ControllerState::PoisedChar('='),
+            _ =>
+                (),
+        }
+        
         match (self.joystick_l.state(),
                self.button_a, self.button_x, self.button_y, self.button_b,
                self.button_r_bumper, self.trigger_r.state()) {
 
             // state doeas not corespond to a char
-            (_, false, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::Neutral,
+            (_, false, false, false, false, false, TriggerState::Neutral) => {
+                if self.button_r_stick {
+                    return ControllerState::PoisedChar(' ');
+                }
+                return ControllerState::Neutral;
+            },
 
             // vowels
             (JoyStickState::Neutral, true, false, false, false, false, TriggerState::Neutral) =>
