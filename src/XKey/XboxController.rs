@@ -1,4 +1,3 @@
-
 extern crate libusb;
 
 const INPUT_BUFFER_SIZE:usize = 20;
@@ -111,6 +110,8 @@ impl ControllerData {
                self.button_dpad_up, self.button_dpad_right,
                self.button_a, self.button_x, self.button_y, self.button_b,
                self.button_r_bumper, self.trigger_r.state()) {
+
+            // numbers / top row
             (true, false, false, false,
              true, false, false, false, false, TriggerState::Neutral) =>
                 return ControllerState::PoisedChar('1'),
@@ -147,6 +148,41 @@ impl ControllerData {
             (false, false, true, false,
              false, false, false, false, false, TriggerState::Pressed(_)) =>
                 return ControllerState::PoisedChar('='),
+
+            // parens and special chars
+            (false, true, false, false,
+             true, false, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('['),
+            (false, true, false, false,
+             false, true, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('('),
+            (false, true, false, false,
+             false, false, true, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar(']'),
+            (false, true, false, false,
+             false, false, false, true, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar(')'),
+
+            (false, false, false, true,
+             true, false, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar(';'),
+            (false, false, false, true,
+             false, true, false, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar(','),
+            (false, false, false, true,
+             false, false, true, false, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('\''),
+            (false, false, false, true,
+             false, false, false, true, false, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('.'),
+            (false, false, false, true,
+             false, false, false, false, true, TriggerState::Neutral) =>
+                return ControllerState::PoisedChar('/'),
+            (false, false, false, true,
+             false, false, false, false, false, TriggerState::Pressed(_)) =>
+                return ControllerState::PoisedChar('\\'),
+            
+            
             _ =>
                 (),
         }

@@ -41,6 +41,8 @@ impl XKey {
                 return format!("{}", c);
             }
         }
+
+        //if let ConrtollerState::Macro //TODO: MAcros
         std::string::String::from("")
     }
 
