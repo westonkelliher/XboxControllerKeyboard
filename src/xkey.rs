@@ -1,16 +1,16 @@
 extern crate libusb;
 extern crate enigo;
-mod XboxController;
-use XboxController::{ControllerData, ControllerState}; //? JoyStickData? ControllerState?
+mod xboxcontroller;
+use xboxcontroller::{ControllerData, ControllerState}; //? JoyStickData? ControllerState?
 use enigo::{Enigo, KeyboardControllable, Key};
 
 const INPUT_CHANNEL: u8 = 0x81;
 const TIMEOUT: std::time::Duration = std::time::Duration::from_millis(30);
 
 
-pub fn init_XKey() -> XKey {
+pub fn init_xkey() -> XKey {
     XKey {
-        controller_data: XboxController::init_controller_data(),
+        controller_data: xboxcontroller::init_controller_data(),
         controller_state: ControllerState::Neutral,
         enigo: Enigo::new(),
         libusb_context: libusb::Context::new().unwrap(),
@@ -48,7 +48,7 @@ impl XKey {
 
     pub fn begin(mut self) {
         let mut handle_option: Option<libusb::DeviceHandle> = None;
-        match XboxController::get_controller_handle(&self.libusb_context) {
+        match xboxcontroller::get_controller_handle(&self.libusb_context) {
             Ok(handle) => {
                 //rename_this_fn(&handle);
                 handle_option = Some(handle);
@@ -75,10 +75,10 @@ impl XKey {
                         self.enigo.key_up(Key::Alt);
                     }
                 }
-                Err(_LIBUSB_ERROR_TIMEOUT) => {
+                Err(_) => { //only do this for timeout errors
                     continue;
                 }
-                Err(e) => panic!("{}", e),
+                //Err(e) => panic!("{}", e),
             }
         }
     }

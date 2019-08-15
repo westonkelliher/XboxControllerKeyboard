@@ -1,6 +1,6 @@
 extern crate libusb;
 
-const INPUT_BUFFER_SIZE:usize = 20;
+//const INPUT_BUFFER_SIZE:usize = 20;
 const XBOX_CONTROLLER_ID: u16 = 654;
 const DATAFLOW_INTERFACE: u8 = 0;
 
@@ -288,36 +288,14 @@ impl ControllerData {
         }
         false
     }
-    
-    // TODO: make a struct (called ControllerTracker?) to contain ControllerData with below functionality
-    pub fn get_output(&self, last_state: &ControllerState, new_state: &ControllerState) -> Option<std::string::String> {
-        if let ControllerState::PoisedChar(c) = last_state {
-            if let ControllerState::Neutral = new_state {
-                return Some(std::string::String::from(format!("{}",c)));
-            }
-        }
-        None
-    }
 }
+
 #[derive(Debug)]
 pub enum ControllerState {
     Confused,
     Neutral,
     PoisedChar(char),
 }
-impl ControllerState {
-    pub fn copy(&self) -> ControllerState {  //TODO: do this properly (need wifi)
-        match self {
-            ControllerState::Confused =>
-                return ControllerState::Confused,
-            ControllerState::Neutral =>
-                return ControllerState::Neutral,
-            ControllerState::PoisedChar(c) =>
-                return ControllerState::PoisedChar(*c),
-        }
-    }
-}
-
 
 // Joystick
 struct JoyStickData {
@@ -422,7 +400,7 @@ impl ControllerData {
         self.button_b =       0b00100000 & buf[3] != 0;
         self.button_a =       0b00010000 & buf[3] != 0;
         //self.button_ = 0b00001000 & buf[3] != 0; //no data encoded by this bit
-        self.button_start =   0b00000100 & buf[3] != 0;
+        self.button_xbox =   0b00000100 & buf[3] != 0;
         self.button_r_bumper = 0b00000010 & buf[3] != 0;
         self.button_l_bumper = 0b00000001 & buf[3] != 0;
         // bytes 4 and 5
