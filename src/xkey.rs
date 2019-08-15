@@ -31,13 +31,6 @@ impl XKey {
     fn get_output_string(&self, last_state: &ControllerState) -> std::string::String {
         if let ControllerState::PoisedChar(c) = last_state {
             if let ControllerState::Neutral = self.controller_state {
-                /*let shift = if self.controller_data.is_shift() { "{+SHIFT}" } else { "" };
-                let ctrl = if self.controller_data.is_ctrl() { "{+CTRL}" } else { "" };
-                let alt = if self.controller_data.is_alt() { "{+ALT}" } else { "" };
-                let shift_ = if self.controller_data.is_shift() { "{-SHIFT}" } else { "" };
-                let ctrl_ = if self.controller_data.is_ctrl() { "{-CTRL}" } else { "" };
-                let alt_ = if self.controller_data.is_alt() { "{-ALT}" } else { "" };
-                */
                 return format!("{}", c);
             }
         }

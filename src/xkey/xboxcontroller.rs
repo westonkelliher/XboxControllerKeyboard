@@ -152,13 +152,13 @@ impl ControllerData {
             // parens and special chars
             (false, true, false, false,
              true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('['),
+                return ControllerState::PoisedChar(']'),
             (false, true, false, false,
              false, true, false, false, false, TriggerState::Neutral) =>
                 return ControllerState::PoisedChar('('),
             (false, true, false, false,
              false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar(']'),
+                return ControllerState::PoisedChar('['),
             (false, true, false, false,
              false, false, false, true, false, TriggerState::Neutral) =>
                 return ControllerState::PoisedChar(')'),
