@@ -58,10 +58,10 @@ impl XKey {
             }
         };
 
-        let mut handle = handle_option.unwrap();
+        let handle = handle_option.unwrap();
         loop {
             match handle.read_interrupt(INPUT_CHANNEL, &mut self.usb_buffer, TIMEOUT) {
-                Ok(n) => {
+                Ok(_n) => {
                     let last_state = self.controller_state;
                     self.controller_data.load_from_bytes(&self.usb_buffer);
                     self.controller_state = self.controller_data.state();
@@ -75,7 +75,7 @@ impl XKey {
                         self.enigo.key_up(Key::Alt);
                     }
                 }
-                Err(LIBUSB_ERROR_TIMEOUT) => {
+                Err(_LIBUSB_ERROR_TIMEOUT) => {
                     continue;
                 }
                 Err(e) => panic!("{}", e),

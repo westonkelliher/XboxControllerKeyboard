@@ -1,14 +1,14 @@
 extern crate libusb;
 extern crate enigo;
 mod XKey;
-use enigo::{Enigo, KeyboardControllable, Key};
+
 
 const INPUT_CHANNEL: u8 = 0x81;
 const TIMEOUT: std::time::Duration = std::time::Duration::from_millis(30);
 
 fn main() {
 
-    let mut xkey = XKey::init_XKey();
+    let xkey = XKey::init_XKey();
     xkey.begin();
 
 
