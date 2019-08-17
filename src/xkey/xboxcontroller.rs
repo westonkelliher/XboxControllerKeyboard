@@ -96,176 +96,268 @@ pub struct ControllerData {
     button_r_stick: bool,
     trigger_l: TriggerData,
     trigger_r: TriggerData,
-    joystick_l: JoyStickData,
-    joystick_r: JoyStickData,
+    stick_l: StickData,
+    stick_r: StickData,
     //
     changed: bool,
+    last_state: ControllerState,
 }
+
+#[derive(PartialEq)]
+enum DPadState {
+    Neutral, // none pressed
+    Confused, //multiple pressed
+    Down,
+    Left,
+    Up,
+    Right,
+}
+
+#[derive(PartialEq)]
+enum RButtonState {
+    Neutral, // none pressed
+    Confused, // multiple pressed
+    Down,
+    Left,
+    Up,
+    Right,
+    Bumper,
+    Trigger,
+    Stick,
+}
+
+#[derive(PartialEq)]
+enum ModifierState {
+    Neutral,
+    Shift,
+    Ctrl,
+    Alt,
+    AltShift,
+    AltCtrl,
+}
+
+use ControllerState::{ModableReady, ExactReady, MacroReady};
 impl ControllerData {
 
-    //TODO: DPad enum. RButton enum (along with dpad() and rbutton() functions)
-    
-    pub fn state(&self) -> ControllerState {   //TODO: change all pub's in this file that need not be pub
-        match (self.button_dpad_down, self.button_dpad_left,
-               self.button_dpad_up, self.button_dpad_right,
-               self.button_a, self.button_x, self.button_y, self.button_b,
-               self.button_r_bumper, self.trigger_r.state()) {
-
-            // numbers / top row
-            (true, false, false, false,
-             true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('1'),
-            (true, false, false, false,
-             false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('2'),
-            (true, false, false, false,
-             false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('3'),
-            (true, false, false, false,
-             false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('4'),
-            (true, false, false, false,
-             false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('5'),
-            (true, false, false, false,
-             false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('6'),
-            (false, false, true, false,
-             true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('7'),
-            (false, false, true, false,
-             false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('8'),
-            (false, false, true, false,
-             false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('9'),
-            (false, false, true, false,
-             false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('0'),
-            (false, false, true, false,
-             false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('-'),
-            (false, false, true, false,
-             false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('='),
-
-            // parens and special chars
-            (false, true, false, false,
-             true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar(']'),
-            (false, true, false, false,
-             false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('('),
-            (false, true, false, false,
-             false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('['),
-            (false, true, false, false,
-             false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar(')'),
-
-            (false, false, false, true,
-             true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar(';'),
-            (false, false, false, true,
-             false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar(','),
-            (false, false, false, true,
-             false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('\''),
-            (false, false, false, true,
-             false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('.'),
-            (false, false, false, true,
-             false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('/'),
-            (false, false, false, true,
-             false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('\\'),
+    pub fn state(&self) -> ControllerState {
+        if self.last_state == ControllerState::Neutral {
+            return self.raw_state();
+        } else {
             
-            
-            _ =>
-                (),
-        }
-        
-        match (self.joystick_l.state(),
-               self.button_a, self.button_x, self.button_y, self.button_b,
-               self.button_r_bumper, self.trigger_r.state()) {
-
-            // state doeas not corespond to a char
-            (_, false, false, false, false, false, TriggerState::Neutral) => {
-                if self.button_r_stick {
-                    return ControllerState::PoisedChar(' ');
-                }
-                return ControllerState::Neutral;
-            },
-
-            // vowels
-            (JoyStickState::Neutral, true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('a'),
-            (JoyStickState::Neutral, false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('e'),
-            (JoyStickState::Neutral, false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('i'),
-            (JoyStickState::Neutral, false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('o'),
-            (JoyStickState::Neutral, false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('u'),
-            (JoyStickState::Neutral, false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('y'),
-
-            // non-voiced
-            (JoyStickState::Up(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('p'),
-            (JoyStickState::Up(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('t'),
-            (JoyStickState::Up(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('f'),
-            (JoyStickState::Up(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('s'),
-            (JoyStickState::Up(_), false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('c'),
-            (JoyStickState::Up(_), false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('k'),
-
-            // voiced
-            (JoyStickState::Down(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('b'),
-            (JoyStickState::Down(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('d'),
-            (JoyStickState::Down(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('v'),
-            (JoyStickState::Down(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('z'),
-            (JoyStickState::Down(_), false, false, false, false, true, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('g'),
-            (JoyStickState::Down(_), false, false, false, false, false, TriggerState::Pressed(_)) =>
-                return ControllerState::PoisedChar('j'),
-
-            // slides
-            (JoyStickState::Right(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('h'),
-            (JoyStickState::Right(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('l'),
-            (JoyStickState::Right(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('r'),
-            (JoyStickState::Right(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('w'),
-
-            // oddies
-            (JoyStickState::Left(_), true, false, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('m'),
-            (JoyStickState::Left(_), false, true, false, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('n'),
-            (JoyStickState::Left(_), false, false, true, false, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('q'),
-            (JoyStickState::Left(_), false, false, false, true, false, TriggerState::Neutral) =>
-                return ControllerState::PoisedChar('x'),
-
-            // convoluted
-            (_, _, _, _, _, _, _) =>
-                return ControllerState::Confused,
+            // macros
+            match (&self.last_state, self.raw_state()) {
+                (ModableReady('i'), ModableReady('v')) =>
+                    return MacroReady(Macro::If),
+                _ =>
+                    return self.raw_state(),
+            }
         }
     }
+    
+    fn raw_state(&self) -> ControllerState {   //TODO: change pub's in this file that need not be pub
+
+        if self.rbutton_state() == RButtonState::Neutral &&
+            self.stick_r.state() == StickState::Neutral {
+            return ControllerState::Neutral;
+        }
+        
+        // alphabetic/modable
+        if (self.dpad_state() == DPadState::Neutral &&
+            self.stick_r.state() == StickState::Neutral) {
+            match (self.stick_l.state(), self.rbutton_state()) {
+                
+                // vowels
+                (StickState::Neutral, RButtonState::Down) =>
+                    return ModableReady('a'),
+                (StickState::Neutral, RButtonState::Left) =>
+                    return ModableReady('e'),
+                (StickState::Neutral, RButtonState::Up) =>
+                    return ModableReady('i'),
+                (StickState::Neutral, RButtonState::Right) =>
+                    return ModableReady('o'),
+                (StickState::Neutral, RButtonState::Bumper) =>
+                    return ModableReady('u'),
+                (StickState::Neutral, RButtonState::Trigger) =>
+                    return ModableReady('y'),
+
+                // non-voiced
+                (StickState::Up(_), RButtonState::Down) =>
+                    return ModableReady('p'),
+                (StickState::Up(_), RButtonState::Left) =>
+                    return ModableReady('t'),
+                (StickState::Up(_), RButtonState::Up) =>
+                    return ModableReady('f'),
+                (StickState::Up(_), RButtonState::Right) =>
+                    return ModableReady('s'),
+                (StickState::Up(_), RButtonState::Bumper) =>
+                    return ModableReady('c'),
+                (StickState::Up(_), RButtonState::Trigger) =>
+                    return ModableReady('k'),
+
+                // voiced
+                (StickState::Down(_), RButtonState::Down) =>
+                    return ModableReady('b'),
+                (StickState::Down(_), RButtonState::Left) =>
+                    return ModableReady('d'),
+                (StickState::Down(_), RButtonState::Up) =>
+                    return ModableReady('v'),
+                (StickState::Down(_), RButtonState::Right) =>
+                    return ModableReady('z'),
+                (StickState::Down(_), RButtonState::Bumper) =>
+                    return ModableReady('g'),
+                (StickState::Down(_), RButtonState::Trigger) =>
+                    return ModableReady('j'),
+
+                // slides
+                (StickState::Right(_), RButtonState::Down) =>
+                    return ModableReady('h'),
+                (StickState::Right(_), RButtonState::Left) =>
+                    return ModableReady('l'),
+                (StickState::Right(_), RButtonState::Up) =>
+                    return ModableReady('r'),
+                (StickState::Right(_), RButtonState::Right) =>
+                    return ModableReady('w'),
+
+                // odds
+                (StickState::Left(_), RButtonState::Down) =>
+                    return ModableReady('m'),
+                (StickState::Left(_), RButtonState::Left) =>
+                    return ModableReady('n'),
+                (StickState::Left(_), RButtonState::Up) =>
+                    return ModableReady('q'),
+                (StickState::Left(_), RButtonState::Right) =>
+                    return ModableReady('x'),
+
+                // white space
+                (StickState::Neutral, RButtonState::Stick) => {
+                    if self.modifier_state() == ModifierState::Shift {
+                        return MacroReady(Macro::Enter);
+                    }
+                    return ExactReady(' ');
+                }
+
+                // else move on
+                _ => (),
+            }
+        }
+        
+        else if (self.dpad_state() != DPadState::Neutral &&
+                 self.stick_r.state() == StickState::Neutral) {
+            match (self.dpad_state(), self.rbutton_state(),
+                   self.modifier_state()) {
+                
+                // numbers (low)
+                (DPadState::Down, RButtonState::Down, _) =>
+                    return ModableReady('1'),
+                (DPadState::Down, RButtonState::Left, _) =>
+                    return ModableReady('2'),
+                (DPadState::Down, RButtonState::Up, _) =>
+                    return ModableReady('3'),
+                (DPadState::Down, RButtonState::Right, _) =>
+                    return ModableReady('4'),
+                (DPadState::Down, RButtonState::Bumper, _) =>
+                    return ModableReady('5'),
+                (DPadState::Down, RButtonState::Trigger, _) =>
+                    return ModableReady('6'),
+                
+                // numbers (high)
+                (DPadState::Up, RButtonState::Down, _) =>
+                    return ModableReady('7'),
+                (DPadState::Up, RButtonState::Left, _) =>
+                    return ModableReady('8'),
+                (DPadState::Up, RButtonState::Up, _) =>
+                    return ModableReady('9'),
+                (DPadState::Up, RButtonState::Right, _) =>
+                    return ModableReady('0'),
+                
+                // (+/- configuration on the keyboard is dumb so i changed it)
+                (DPadState::Up, RButtonState::Bumper, ModifierState::Neutral) =>
+                    return ExactReady('-'),
+                (DPadState::Up, RButtonState::Trigger, ModifierState::Neutral) =>
+                    return ExactReady('+'),
+                (DPadState::Up, RButtonState::Bumper, ModifierState::Shift) =>
+                    return ExactReady('_'),
+                (DPadState::Up, RButtonState::Trigger, ModifierState::Shift) =>
+                    return ExactReady('='),
+                
+                // scoping (note: RButtonState::Up/Down used for macros)
+                (DPadState::Right, RButtonState::Left, ModifierState::Neutral) =>
+                    return ExactReady('('),
+                (DPadState::Right, RButtonState::Right, ModifierState::Neutral) =>
+                    return ExactReady(')'),
+                (DPadState::Right, RButtonState::Left, ModifierState::Shift) =>
+                    return ExactReady('['),
+                (DPadState::Right, RButtonState::Right, ModifierState::Shift) =>
+                    return ExactReady(']'),
+                (DPadState::Right, RButtonState::Left, ModifierState::Ctrl) =>
+                    return ExactReady('{'),
+                (DPadState::Right, RButtonState::Right, ModifierState::Ctrl) =>
+                    return ExactReady('}'),
+                (DPadState::Right, RButtonState::Down, ModifierState::Neutral) =>
+                    return ExactReady('<'),
+                (DPadState::Right, RButtonState::Up, ModifierState::Neutral) =>
+                    return ExactReady('>'),
+                
+                // quotes('Y\"')
+                (DPadState::Right, RButtonState::Bumper, ModifierState::Neutral) =>
+                    return ExactReady('\''),
+                (DPadState::Right, RButtonState::Bumper, ModifierState::Shift) =>
+                    return ExactReady('\"'),
+                (DPadState::Right, RButtonState::Bumper, ModifierState::Ctrl) =>
+                    return ExactReady('`'),
+                (DPadState::Right, RButtonState::Bumper, ModifierState::Alt) =>
+                    return ExactReady('~'),
+                
+                // slashes
+                (DPadState::Right, RButtonState::Trigger, ModifierState::Neutral) =>
+                    return ExactReady('/'),
+                (DPadState::Right, RButtonState::Trigger, ModifierState::Shift) =>
+                    return ExactReady('\\'),
+                (DPadState::Right, RButtonState::Trigger, ModifierState::Ctrl) =>
+                    return ExactReady('|'),
+                
+                // punctuation
+                (DPadState::Left, RButtonState::Down, ModifierState::Neutral) =>
+                    return ExactReady('.'),
+                (DPadState::Left, RButtonState::Left, ModifierState::Neutral) =>
+                    return ExactReady(','),
+                (DPadState::Left, RButtonState::Up, ModifierState::Neutral) =>
+                    return ExactReady(':'),
+                (DPadState::Left, RButtonState::Right, ModifierState::Neutral) =>
+                    return ExactReady(';'),
+                (DPadState::Left, RButtonState::Bumper, ModifierState::Neutral) =>
+                    return ExactReady('?'),
+                (DPadState::Left, RButtonState::Trigger, ModifierState::Neutral) =>
+                    return ExactReady('!'),
+                
+                // else move on
+                _ => (),
+            }
+        }
+        
+        else if self.stick_r.state() != StickState::Neutral {
+            match (self.stick_r.state(), self.dpad_state(), self.modifier_state()) {
+
+                // navigation
+                (StickState::Left(_), DPadState::Neutral, ModifierState::Neutral) =>
+                    return MacroReady(Macro::CharBack),
+                (StickState::Right(_), DPadState::Neutral, ModifierState::Neutral) =>
+                    return MacroReady(Macro::CharFor),
+                (StickState::Up(_), DPadState::Neutral, ModifierState::Neutral) =>
+                    return MacroReady(Macro::LineUp),
+                (StickState::Down(_), DPadState::Neutral, ModifierState::Neutral) =>
+                    return MacroReady(Macro::LineDown),
+
+                // else move on
+                _ => (),
+            }
+        }
+                 
+                 
+                 
+        return ControllerState::Confused;
+    }
+    
     pub fn is_shift(&self) -> bool {
         if let TriggerState::Pressed(_) = self.trigger_l.state() {
             return true;
@@ -288,49 +380,162 @@ impl ControllerData {
         }
         false
     }
+
+    fn dpad_state(&self) -> DPadState {
+        match (self.button_dpad_down, self.button_dpad_left,
+               self.button_dpad_up, self.button_dpad_right) {
+            (false, false, false, false) =>
+                return DPadState::Neutral,
+            (true, false, false, false) =>
+                return DPadState::Down,
+            (false, true, false, false) =>
+                return DPadState::Left,
+            (false, false, true, false) =>
+                return DPadState::Up,
+            (false, false, false, true) =>
+                return DPadState::Right,
+            _ =>
+                return DPadState::Confused,
+        }
+    }
+
+    fn rbutton_state(&self) -> RButtonState {
+        match (self.button_a, self.button_x, self.button_y,
+               self.button_b, self.button_r_bumper,
+               self.button_r_stick, self.trigger_r.state()) {
+            (false, false, false, false, false, false, TriggerState::Neutral) =>
+                return RButtonState::Neutral,
+            (true, false, false, false, false, false, TriggerState::Neutral) =>
+                return RButtonState::Down,
+            (false, true, false, false, false, false, TriggerState::Neutral) =>
+                return RButtonState::Left,
+            (false, false, true, false, false, false, TriggerState::Neutral) =>
+                return RButtonState::Up,
+            (false, false, false, true, false, false, TriggerState::Neutral) =>
+                return RButtonState::Right,
+            (false, false, false, false, true, false, TriggerState::Neutral) =>
+                return RButtonState::Bumper,
+            (false, false, false, false, false, true, TriggerState::Neutral) =>
+                return RButtonState::Stick,
+            (false, false, false, false, false, false, TriggerState::Pressed(_)) =>
+                return RButtonState::Trigger,
+            _ =>
+                return RButtonState::Confused,
+        }
+    }
+
+    fn modifier_state(&self) -> ModifierState {
+        match (self.trigger_l.state(), self.button_l_bumper, self.button_l_stick) {
+            (TriggerState::Neutral, false, false) =>
+                return ModifierState::Neutral,
+            (TriggerState::Pressed(_), false, false) =>
+                return ModifierState::Shift,
+            (TriggerState::Neutral, true, false) =>
+                return ModifierState::Ctrl,
+            (TriggerState::Neutral, false, true) =>
+                return ModifierState::Alt,
+            (TriggerState::Pressed(_), false, true) =>
+                return ModifierState::AltShift,
+            (TriggerState::Neutral, true, true) =>
+                return ModifierState::AltCtrl,
+            _ =>
+                return ModifierState::Neutral,
+        }
+    }
+
 }
 
-#[derive(Debug)]
-pub enum ControllerState {
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum ControllerState { // returning to Neutral from a signicant state should incure output
     Confused,
     Neutral,
-    PoisedChar(char),
+    ModableReady(char), // modable as in modifiable as in applying shift, ctrl, and al
+    //                     works as it would on a keyboard
+    ExactReady(char), // alt, shift, and ctrl, modify the output differently than expected
+    MacroReady(Macro),
 }
 
-// Joystick
-struct JoyStickData {
+#[derive(Debug, Clone, PartialEq, Hash, Copy)]
+pub enum Macro {
+    //navigation
+    LineDown,
+    LineUp,
+    CharFor,
+    CharBack,
+    WordFor,
+    WordBack,
+    ParFor,
+    ParBack,
+
+    //deletion
+    DelLineDown,
+    DelLineUp,
+    DelCharFor,
+    DelCharBack,
+    DelWordFor,
+    DelWordBack,
+    DelParFor,
+    DelParBack,
+    
+    
+    //special char
+    Enter,
+
+    //key words
+    ExternCrate,
+    Mod,
+    Use,
+    Const,
+    Pub,
+    Let,
+
+    //expansive
+    Fn,
+    Struct,
+    Enum,
+    Impl,
+    ForIn,
+    Match,
+    If,
+
+    //TODO: the rest
+} //TODO: Map to Vec<OutPart> in configuration.rs
+impl Eq for Macro {}
+
+// Stick
+struct StickData {
     x_pos: i16,
     y_pos: i16,
 }
 const TILT_THRESHHOLD: i16 = 6000;
 const SMASH_THRESHHOLD: i16 = 31000;
-impl JoyStickData {
-    pub fn state(&self) -> JoyStickState { //TODO: use math.abs() when you have wifi for syntx
+impl StickData {
+    pub fn state(&self) -> StickState { //TODO: use math.abs() when you have wifi for syntx
         match (self.x_pos, self.y_pos) {
             (x,y) if x < TILT_THRESHHOLD && x > -1*TILT_THRESHHOLD 
                 && y < TILT_THRESHHOLD && y > -1* TILT_THRESHHOLD => {
-                    return JoyStickState::Neutral;
+                    return StickState::Neutral;
                 }
             (x,y) if abs(x) >= abs(y) => {
                 if x > 0 {
-                    return JoyStickState::Right(x > SMASH_THRESHHOLD);
+                    return StickState::Right(x > SMASH_THRESHHOLD);
                 } else {
-                    return JoyStickState::Left(x < -1*SMASH_THRESHHOLD);
+                    return StickState::Left(x < -1*SMASH_THRESHHOLD);
                 } 
             }
             (x,y) if abs(x) < abs(y) => {
                 if y > 0 {
-                    return JoyStickState::Up(y > SMASH_THRESHHOLD);
+                    return StickState::Up(y > SMASH_THRESHHOLD);
                 } else {
-                    return JoyStickState::Down(y < -1*SMASH_THRESHHOLD);
+                    return StickState::Down(y < -1*SMASH_THRESHHOLD);
                 } 
             }
-            (x,y) => panic!("Broken values of joystick x,y: {},{}", x, y),
+            (x,y) => panic!("Broken values of stick x,y: {},{}", x, y),
         }
     }
 }
-#[derive(Debug)]
-pub enum JoyStickState {
+#[derive(PartialEq)]
+pub enum StickState {
     Neutral,
     Left(bool), // false means tilt, true means full (smash)
     Right(bool),
@@ -351,7 +556,7 @@ impl TriggerData {
         }
     }
 }
-#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum TriggerState {
     Neutral,
     Pressed(bool), //false means partially pressed, true means fully squeezed down
@@ -376,15 +581,17 @@ pub fn init_controller_data() -> ControllerData {
         button_r_stick: false,
         trigger_l: TriggerData{pos: 0},
         trigger_r: TriggerData{pos: 0},
-        joystick_l: JoyStickData {x_pos: 0, y_pos: 0},
-        joystick_r: JoyStickData {x_pos: 0, y_pos: 0},
+        stick_l: StickData {x_pos: 0, y_pos: 0},
+        stick_r: StickData {x_pos: 0, y_pos: 0},
         //
         changed: true,
+        last_state: ControllerState::Neutral,
     }
 }
 
 impl ControllerData {
     pub fn load_from_bytes(&mut self, buf: &[u8]) { //TODO: ensure slice has 20 elements
+        let last_frame_state = self.state();
         // byte 2
         self.button_r_stick =     0b10000000 & buf[2] != 0;
         self.button_l_stick =     0b01000000 & buf[2] != 0;
@@ -407,14 +614,20 @@ impl ControllerData {
         self.trigger_l.pos = buf[4];
         self.trigger_r.pos = buf[5];
         // bytes 6, 7, 8, and 9
-        self.joystick_l.x_pos = (buf[6] as i16) + ((buf[7] as i16) << 8);
-        self.joystick_l.y_pos = (buf[8] as i16) + ((buf[9] as i16) << 8);
+        self.stick_l.x_pos = (buf[6] as i16) + ((buf[7] as i16) << 8);
+        self.stick_l.y_pos = (buf[8] as i16) + ((buf[9] as i16) << 8);
         // bytes 10, 11, 12, 13
-        self.joystick_r.x_pos = (buf[10] as i16) + ((buf[11] as i16) << 8);
-        self.joystick_r.y_pos = (buf[12] as i16) + ((buf[13] as i16) << 8);
+        self.stick_r.x_pos = (buf[10] as i16) + ((buf[11] as i16) << 8);
+        self.stick_r.y_pos = (buf[12] as i16) + ((buf[13] as i16) << 8);
 
         // reduce cost of figuring out output
-        self.changed = true;
+        if self.state() != last_frame_state {
+            self.last_state = last_frame_state;
+            self.changed = true;
+        }
     }
 
+    pub fn last_state(&self) -> ControllerState {
+       self.last_state
+    }
 }
