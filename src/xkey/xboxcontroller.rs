@@ -13,6 +13,7 @@ fn abs(x: i16) -> i16 {
     }
 }
 
+
 //TODO: propper errors instead of String as Error
 pub fn get_controller_handle(context: &libusb::Context) -> Result<libusb::DeviceHandle, std::string::String> {
     let xbox_device_optn = get_device_at_address(XBOX_CONTROLLER_ID, &context);
@@ -123,6 +124,9 @@ enum RButtonState {
     Right,
     Bumper,
     Trigger,
+    Back,
+    Start,
+    Xbox,
     Stick,
 }
 
@@ -134,6 +138,8 @@ enum ModifierState {
     Alt,
     AltShift,
     AltCtrl,
+    Super,
+    SuperCtrl,
 }
 
 use ControllerState::{ModableReady, ExactReady, MacroReady};
@@ -180,6 +186,14 @@ impl ControllerData {
                 (StickState::Neutral, RButtonState::Trigger) =>
                     return ModableReady('y'),
 
+                // mid-buttons
+                (StickState::Neutral, RButtonState::Back) =>
+                    return MacroReady(Macro::Undo),
+                (StickState::Neutral, RButtonState::Start) =>
+                    return MacroReady(Macro::Tab),
+                (StickState::Neutral, RButtonState::Xbox) =>
+                    return MacroReady(Macro::Super),
+                
                 // non-voiced
                 (StickState::Up(_), RButtonState::Down) =>
                     return ModableReady('p'),
@@ -348,6 +362,24 @@ impl ControllerData {
                 (StickState::Down(_), DPadState::Neutral, ModifierState::Neutral) =>
                     return MacroReady(Macro::LineDown),
 
+                // deletion
+                (StickState::Right(_), DPadState::Down, ModifierState::Neutral) =>
+                    return MacroReady(Macro::DelCharFor),
+                (StickState::Left(_), DPadState::Down, ModifierState::Neutral) =>
+                    return MacroReady(Macro::DelCharBack),
+                (StickState::Right(_), DPadState::Down, ModifierState::Shift) =>
+                    return MacroReady(Macro::DelWordFor),
+                (StickState::Left(_), DPadState::Down, ModifierState::Shift) =>
+                    return MacroReady(Macro::DelWordBack),
+                (StickState::Down(_), DPadState::Down, ModifierState::Neutral) =>
+                    return MacroReady(Macro::DelLineFor),
+                (StickState::Up(_), DPadState::Down, ModifierState::Neutral) =>
+                    return MacroReady(Macro::DelLineBack),
+                (StickState::Down(_), DPadState::Down, ModifierState::Shift) =>
+                    return MacroReady(Macro::DelParDown),
+                (StickState::Up(_), DPadState::Down, ModifierState::Shift) =>
+                    return MacroReady(Macro::DelParUp),
+
                 // else move on
                 _ => (),
             }
@@ -371,6 +403,10 @@ impl ControllerData {
     
     pub fn is_alt(&self) -> bool {
         self.button_l_stick
+    }
+
+    pub fn is_super(&self) -> bool {
+        self.button_xbox
     }
 
     pub fn changed(&mut self) -> bool {
@@ -402,42 +438,52 @@ impl ControllerData {
     fn rbutton_state(&self) -> RButtonState {
         match (self.button_a, self.button_x, self.button_y,
                self.button_b, self.button_r_bumper,
-               self.button_r_stick, self.trigger_r.state()) {
-            (false, false, false, false, false, false, TriggerState::Neutral) =>
+               self.button_r_stick, self.trigger_r.state(),
+               self.button_start, self.button_back) {
+            (false, false, false, false, false, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Neutral,
-            (true, false, false, false, false, false, TriggerState::Neutral) =>
+            (true, false, false, false, false, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Down,
-            (false, true, false, false, false, false, TriggerState::Neutral) =>
+            (false, true, false, false, false, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Left,
-            (false, false, true, false, false, false, TriggerState::Neutral) =>
+            (false, false, true, false, false, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Up,
-            (false, false, false, true, false, false, TriggerState::Neutral) =>
+            (false, false, false, true, false, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Right,
-            (false, false, false, false, true, false, TriggerState::Neutral) =>
+            (false, false, false, false, true, false, TriggerState::Neutral, false, false) =>
                 return RButtonState::Bumper,
-            (false, false, false, false, false, true, TriggerState::Neutral) =>
+            (false, false, false, false, false, true, TriggerState::Neutral, false, false) =>
                 return RButtonState::Stick,
-            (false, false, false, false, false, false, TriggerState::Pressed(_)) =>
+            (false, false, false, false, false, false, TriggerState::Pressed(_), false, false) =>
                 return RButtonState::Trigger,
+            (false, false, false, false, false, false, TriggerState::Neutral, true, false) =>
+                return RButtonState::Start,
+            (false, false, false, false, false, false, TriggerState::Neutral, false, true) =>
+                return RButtonState::Back,
             _ =>
                 return RButtonState::Confused,
         }
     }
 
     fn modifier_state(&self) -> ModifierState {
-        match (self.trigger_l.state(), self.button_l_bumper, self.button_l_stick) {
-            (TriggerState::Neutral, false, false) =>
+        match (self.trigger_l.state(), self.button_l_bumper,
+               self.button_l_stick, self.button_xbox) {
+            (TriggerState::Neutral, false, false, false) =>
                 return ModifierState::Neutral,
-            (TriggerState::Pressed(_), false, false) =>
+            (TriggerState::Pressed(_), false, false, false) =>
                 return ModifierState::Shift,
-            (TriggerState::Neutral, true, false) =>
+            (TriggerState::Neutral, true, false, false) =>
                 return ModifierState::Ctrl,
-            (TriggerState::Neutral, false, true) =>
+            (TriggerState::Neutral, false, true, false) =>
                 return ModifierState::Alt,
-            (TriggerState::Pressed(_), false, true) =>
+            (TriggerState::Pressed(_), false, true, false) =>
                 return ModifierState::AltShift,
-            (TriggerState::Neutral, true, true) =>
+            (TriggerState::Neutral, true, true, false) =>
                 return ModifierState::AltCtrl,
+            (TriggerState::Neutral, false, false, true) =>
+                return ModifierState::Super,
+            (TriggerState::Neutral, false, true, true) =>
+                return ModifierState::SuperCtrl,
             _ =>
                 return ModifierState::Neutral,
         }
@@ -464,23 +510,27 @@ pub enum Macro {
     CharBack,
     WordFor,
     WordBack,
-    ParFor,
-    ParBack,
+    ParDown,
+    ParUp,
 
     //deletion
-    DelLineDown,
-    DelLineUp,
+    DelLineFor,
+    DelLineBack,
     DelCharFor,
     DelCharBack,
     DelWordFor,
     DelWordBack,
-    DelParFor,
-    DelParBack,
-    
+    DelParDown,
+    DelParUp,
+
+    // other
+    Undo,
     
     //special char
     Enter,
-
+    Super,
+    Tab,
+    
     //key words
     ExternCrate,
     Mod,

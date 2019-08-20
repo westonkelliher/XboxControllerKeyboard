@@ -22,10 +22,45 @@ pub fn init_xkey() -> XKey {
             (Macro::CharFor, vec!(SpecialKey(Key::RightArrow)) ),
             (Macro::LineDown, vec!(SpecialKey(Key::DownArrow)) ),
             (Macro::LineUp, vec!(SpecialKey(Key::UpArrow)) ),
-            
+            (Macro::WordFor, vec!(ModifierDown(Key::Alt), KeySequence("f".to_string())) ),
+            (Macro::WordBack, vec!(ModifierDown(Key::Alt), KeySequence("b".to_string())) ),
+            (Macro::ParDown, vec!(ModifierDown(Key::Alt), KeySequence("n".to_string())) ),
+            (Macro::ParUp, vec!(ModifierDown(Key::Alt), KeySequence("p".to_string())) ),
 
-             // typeout
+            // deletion
+            (Macro::DelCharFor, vec!(ModifierDown(Key::Control),
+                                     KeySequence("d".to_string())) ),
+            (Macro::DelCharBack, vec!(ModifierDown(Key::Control),
+                                     SpecialKey(Key::Backspace)) ),
+            (Macro::DelWordFor, vec!(ModifierDown(Key::Alt),
+                                     KeySequence("d".to_string())) ),
+            (Macro::DelWordBack, vec!(ModifierDown(Key::Alt),
+                                     SpecialKey(Key::Backspace)) ),
+            (Macro::DelLineFor, vec!(ModifierDown(Key::Control),
+                                     KeySequence("k".to_string())) ),
+            (Macro::DelLineBack, vec!(ModifierDown(Key::Control),
+                                      KeySequence(" aw".to_string())) ),
+            (Macro::DelParDown, vec!(ModifierDown(Key::Alt),
+                                      KeySequence("k".to_string())) ),
+            (Macro::DelParUp, vec!(ModifierDown(Key::Control),
+                                   KeySequence(" ".to_string()),
+                                   ModifierUp(Key::Control),
+                                   ModifierDown(Key::Alt),
+                                   KeySequence("p".to_string()),
+                                   ModifierUp(Key::Alt),
+                                   ModifierDown(Key::Control),
+                                   KeySequence("w".to_string())) ),
+            
+             // specials
             (Macro::Enter, vec!(SpecialKey(Key::Return)) ),
+            (Macro::Tab, vec!(SpecialKey(Key::Tab)) ),
+            (Macro::Super, vec!(SpecialKey(Key::Super)) ),
+
+            // other
+            (Macro::Undo, vec!(ModifierDown(Key::Control), KeySequence("x".to_string()),
+                               ModifierUp(Key::Control), KeySequence("u".to_string())) ),
+
+            // expansions
             (Macro::If, vec!(KeySequence("if  {\n\n}".to_string()), ModifierDown(Key::Control),
                              KeySequence("ppa".to_string()), ModifierUp(Key::Control),
                              ModifierDown(Key::Alt), KeySequence("f".to_string()),
@@ -64,11 +99,13 @@ impl XKey {
         if self.controller_data.is_shift() { self.enigo.key_down(Key::Shift); }
         if self.controller_data.is_ctrl() { self.enigo.key_down(Key::Control); }
         if self.controller_data.is_alt() { self.enigo.key_down(Key::Alt); }
+        if self.controller_data.is_super() { self.enigo.key_down(Key::Super); }
     }
     fn release_mods(&mut self) {
         self.enigo.key_up(Key::Shift);
         self.enigo.key_up(Key::Control);
         self.enigo.key_up(Key::Alt);
+        self.enigo.key_up(Key::Super);
     }
     
     fn execute_output(&mut self, cont_state:ControllerState) {
