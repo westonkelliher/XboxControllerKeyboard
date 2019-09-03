@@ -8,6 +8,7 @@ use enigo::{Enigo, KeyboardControllable, Key};
 const INPUT_CHANNEL: u8 = 0x81;
 const TIMEOUT: std::time::Duration = std::time::Duration::from_millis(30);
 
+const VERBOSE: bool = true;
 
 pub fn init_xkey() -> XKey {
     XKey {
@@ -54,7 +55,7 @@ pub fn init_xkey() -> XKey {
              // specials
             (Macro::Enter, vec!(SpecialKey(Key::Return)) ),
             (Macro::Tab, vec!(SpecialKey(Key::Tab)) ),
-            (Macro::Super, vec!(SpecialKey(Key::Super)) ),
+            (Macro::Super, vec!(SpecialKey(Key::Meta)) ), //TODO: fix
 
             // other
             (Macro::Undo, vec!(ModifierDown(Key::Control), KeySequence("x".to_string()),
@@ -198,7 +199,9 @@ impl XKey {
                     self.controller_state = self.controller_data.state();
                     let last_state = self.controller_data.last_state();
                     if self.controller_data.changed() {
-                        //println!("{:?}  {:?}", self.controller_data.last_state(), self.controller_data.state());
+                        if VERBOSE {
+                            println!("{:?}  {:?}", self.controller_data.last_state(), self.controller_data.state());
+                        }
                         if self.controller_state == ControllerState::Neutral {
                             self.execute_output(last_state);
                         }

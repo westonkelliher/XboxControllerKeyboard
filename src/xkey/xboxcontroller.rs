@@ -5,6 +5,7 @@ const XBOX_CONTROLLER_ID: u16 = 654;
 const DATAFLOW_INTERFACE: u8 = 0;
 
 
+
 fn abs(x: i16) -> i16 {
     if x < 0 {
         -1*(x+1) // add 1 as dirty way to avoid overflow
@@ -436,30 +437,35 @@ impl ControllerData {
     }
 
     fn rbutton_state(&self) -> RButtonState {
+        //println!("doing {}", self.button_xbox);
         match (self.button_a, self.button_x, self.button_y,
                self.button_b, self.button_r_bumper,
                self.button_r_stick, self.trigger_r.state(),
-               self.button_start, self.button_back) {
-            (false, false, false, false, false, false, TriggerState::Neutral, false, false) =>
+               self.button_start, self.button_back, self.button_xbox) {
+            (false, false, false, false, false, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Neutral,
-            (true, false, false, false, false, false, TriggerState::Neutral, false, false) =>
+            (true, false, false, false, false, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Down,
-            (false, true, false, false, false, false, TriggerState::Neutral, false, false) =>
+            (false, true, false, false, false, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Left,
-            (false, false, true, false, false, false, TriggerState::Neutral, false, false) =>
+            (false, false, true, false, false, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Up,
-            (false, false, false, true, false, false, TriggerState::Neutral, false, false) =>
+            (false, false, false, true, false, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Right,
-            (false, false, false, false, true, false, TriggerState::Neutral, false, false) =>
+            (false, false, false, false, true, false, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Bumper,
-            (false, false, false, false, false, true, TriggerState::Neutral, false, false) =>
+            (false, false, false, false, false, true, TriggerState::Neutral, false, false, false) =>
                 return RButtonState::Stick,
-            (false, false, false, false, false, false, TriggerState::Pressed(_), false, false) =>
+            (false, false, false, false, false, false, TriggerState::Pressed(_), false, false, false) =>
                 return RButtonState::Trigger,
-            (false, false, false, false, false, false, TriggerState::Neutral, true, false) =>
+            (false, false, false, false, false, false, TriggerState::Neutral, true, false, false) =>
                 return RButtonState::Start,
-            (false, false, false, false, false, false, TriggerState::Neutral, false, true) =>
+            (false, false, false, false, false, false, TriggerState::Neutral, false, true, false) =>
                 return RButtonState::Back,
+            (false, false, false, false, false, false, TriggerState::Neutral, false, false, true) => {
+                //println!("ok");
+                return RButtonState::Xbox
+            }
             _ =>
                 return RButtonState::Confused,
         }
@@ -548,6 +554,16 @@ pub enum Macro {
     Match,
     If,
 
+    //window control
+    WindowLeft,
+    WindowRight,
+    WindowDragLeft,
+    WindowDragRight,
+    WindowScreenFull,
+    WindowScreenLeft,
+    WindowScreenRight,
+
+    
     //TODO: the rest
 } //TODO: Map to Vec<OutPart> in configuration.rs
 impl Eq for Macro {}
